@@ -143,7 +143,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
     ),
-    # 'DEFAULT_RENDERER_CLASSES': ( ### para produccion, elimina o no permite la aparicion de interfaz restframework
+    # 'DEFAULT_RENDERER_CLASSES': ( ### Elimina o no permite la aparicion de interfaz restframework
     #     'rest_framework.renderers.JSONRenderer',
     # ),
 }
