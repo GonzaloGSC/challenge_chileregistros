@@ -37,6 +37,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'django_filters',
+    'corsheaders',
+    'django_extensions',
+
+    'apps.log_sys',
+    'apps.seia',
+    'apps.bikesantiago',
 ]
 
 MIDDLEWARE = [
