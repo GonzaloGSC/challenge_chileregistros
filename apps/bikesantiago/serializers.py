@@ -3,6 +3,8 @@ from .models import (
     m_extra,
     m_payment,
     m_station,
+    m_company,
+    m_network,
 )
 
 class s_extra(serializers.ModelSerializer):
@@ -11,19 +13,19 @@ class s_extra(serializers.ModelSerializer):
         read_only_fields = ('id',)
         fields = (
             'id',
+            'payments',
             'address',
             'altitude',
             'ebikes',
             'has_ebikes',
             'last_updated',
             'normal_bikes',
-            'payment',
             'payment_terminal',
             'post_code',
             'renting',
             'returning',
             'slots',
-            'api_id',
+            'api_uid',
         )
 
 
@@ -43,8 +45,8 @@ class s_station(serializers.ModelSerializer):
         read_only_fields = ('id',)
         fields = (
             'id',
-            'empty_slots',
             'extra',
+            'empty_slots',
             'free_bikes',
             'api_id',
             'latitude',
@@ -53,3 +55,31 @@ class s_station(serializers.ModelSerializer):
             'timestamp',
         )
 
+
+class s_company(serializers.ModelSerializer):
+    class Meta:
+        model = m_company
+        read_only_fields = ('id',)
+        fields = (
+            'id',
+            'company_code',
+        )
+
+
+class s_network(serializers.ModelSerializer):
+    class Meta:
+        model = m_network
+        read_only_fields = ('id',)
+        fields = (
+            'id',
+            'companys',
+            'stations',
+            'gbfs_href',
+            'href',
+            'api_id',
+            'location_city',
+            'location_country',
+            'location_latitude',
+            'location_longitude',
+            'name',
+        )
