@@ -54,6 +54,13 @@ def exception_decorator(logger: logging.Logger):
     return decorator
 
 def manage_and_respond_exceptions(excep: Exception, logger_var: logging.Logger, http_response: Boolean = False, send_mail: Boolean = False) -> (Response | HttpResponse):
+    """
+    Función encargada de manejar la mayor parte de las excepciones producidas en el proyecto, 
+    su versatilidad es muy amplia, ya que está enfocada en hacer un uso automático de las 
+    excepciones de validación de django y serializers. Además, retorna un objeto Response con 
+    status_code según corresponda, esto es, errores 400 o 500 u otros. Puede adaptarse fácilmente 
+    para envió de errores por email en tiempo real.
+    """
     text: str = 'Processing error. If the problem persists, contact an administrator.'
     error: Boolean = True
     status_var: int = status.HTTP_500_INTERNAL_SERVER_ERROR

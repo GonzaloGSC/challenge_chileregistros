@@ -2,11 +2,10 @@ from django_ratelimit.decorators import ratelimit
 from django.db.utils import IntegrityError
 
 from bs4 import BeautifulSoup
-import requests
+import requests, json, os, time
 from requests.exceptions import ConnectionError, ConnectTimeout
-from datetime import datetime
 from joblib import Parallel, delayed
-from rest_framework.exceptions import ValidationError, ErrorDetail
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
@@ -28,12 +27,18 @@ LOGGER = create_logger("seia.log")
 
 
 def get_model_project(number:int) -> (m_project | None):
+    """
+    Obtiene la instancia del modelo m_project, si no, retorna None.
+    """
     instance = m_project.objects.filter(number=number).first()
     return instance
 
 
 def get_page_response(url:str) -> (Response):
-    attempts = 10
+    """
+    Realiza la obtención del sitio web, realiza varios intentos en caso de detectar errores de conexión o timeout.
+    """
+    attempts = 20
     ready = False
     while(not ready):
         try:
@@ -42,6 +47,8 @@ def get_page_response(url:str) -> (Response):
         except Exception as err:
             if ((err.__class__ == ConnectionError or err.__class__ == ConnectTimeout) and attempts > 0):
                 attempts = attempts - 1
+                print("page: " + url[:-1] + ", reintentando (Intentos restantes: " + str(attempts) + ")...")
+                time.sleep(2)
             else:
                 raise err
     if response.status_code != 200:
@@ -50,6 +57,9 @@ def get_page_response(url:str) -> (Response):
 
 
 def is_float(num:str):
+    """
+    Valida si un dato str puede ser transformado a float.
+    """
     try:
         float(num)
         return True
@@ -58,6 +68,9 @@ def is_float(num:str):
 
 
 def is_int(num:str):
+    """
+    Valida si un dato str puede ser transformado a int.
+    """
     try:
         int(num)
         return True
@@ -67,7 +80,14 @@ def is_int(num:str):
 
 @ratelimit(key='ip', rate='10/m')
 def load_data_seia(request:Request) -> (Response):
+    """
+    Proceso principal de scraping. Realiza, en primera instancia, un reconocimiento del 
+    número de páginas a recorrer, luego, ejecuta de forma paralelizada el recorrido de 
+    cada tabla por cada página, finalmente guarda la data en un archivo .json y responde 
+    al request.
+    """
     try:
+        # Get pages number
         url = "https://seia.sea.gob.cl/busqueda/buscarProyectoAction.php"
         response = get_page_response(url)
         webpage = response.content.strip()
@@ -79,6 +99,11 @@ def load_data_seia(request:Request) -> (Response):
             parallel(
                 delayed(parallel_data_seia)(page) for page in range(1, len(select_options)+1)
             )
+        # Save data in a json file
+        data = list(m_project.objects.all().values())
+        for element in data:
+            element["date"] = str(element["date"])
+        save_data_json(data, "data.json")
         # Response part
         response_data = {
             'success': True,
@@ -93,6 +118,12 @@ def load_data_seia(request:Request) -> (Response):
 
 
 def parallel_data_seia(page: int) -> (None):
+    """
+    Función que se encarga del procesamiento principal del Web scraping. Obtiene la tabla de la página y la lee por 
+    filas y columnas. Realiza múltiples ajustes a los datos para evitar errores con BDD postgres y de 
+    sincronización para evitar crear duplicados. Crea objetos inexistentes y actualiza los que ya existen, 
+    puede ejecutarse cuantas veces sea necesario sin miedo a dañar la data.
+    """
     final_array = []
     print("page:", page)
     url = "https://seia.sea.gob.cl/busqueda/buscarProyectoAction.php?_paginador_fila_actual="
@@ -121,8 +152,8 @@ def parallel_data_seia(page: int) -> (None):
             if count == 0:
                 row_data["number"] = int(columna.text) if is_int(columna.text) else None
             if count == 1:
-                # 
                 row_data["name"] = columna.text.replace("\n", "").replace("\t", "") if columna.text != "" and columna.text != None else None
+                row_data["name"] = row_data["name"].replace("'/", "").replace("'\\", "").replace('"\\', "").replace('"', "").replace("'", "")
                 if row_data["name"][-1] == " ":
                     row_data["name"] = row_data["name"][:-1]
                 row_data["detail"] = columna.a['href'] if columna.a != None else None
@@ -142,7 +173,7 @@ def parallel_data_seia(page: int) -> (None):
                 row_data["status"] = columna.text if columna.text != "" and columna.text != None else None
             if count == 9:
                 if columna != "" and columna != None:
-                    row_data["status"] = columna.a["href"] if columna.a != None else None
+                    row_data["map"] = "https://seia.sea.gob.cl/" + columna.a.get('onclick').replace("window.open('", "").replace("', 'mapa')", "").replace(" ", "") if columna.a.get('onclick', None) != None else None
                 final_array.append(row_data.copy())
             if count >= 10:
                 break
@@ -166,6 +197,11 @@ def parallel_data_seia(page: int) -> (None):
 
 
 def manage_parallel_error(err:Exception, data:dict) -> (None):
+    """
+    Función encargada de manejar errores de ejecución paralela. Al trabajar con guardado de datos en la BDD, 
+    de forma paralela, se debe contar con tratamiento avanzado de excepciones, adaptándose cual sea el caso 
+    del error, todo esto con el fin de evitar duplicaciones y otros problemas.
+    """
     exists = False
     if err.__class__ == ValidationError:
         print("Error al validar...")
@@ -192,3 +228,14 @@ def manage_parallel_error(err:Exception, data:dict) -> (None):
             raise err
     else:
         raise err
+
+
+def save_data_json(data, file_path:str) -> (None):
+    """
+    Guarda la data entregada en un archivo .json.
+    """
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    with open(file_path, 'w') as f:
+        json.dump(data, f)
+    f.close()

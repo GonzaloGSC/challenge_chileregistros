@@ -31,32 +31,55 @@ LOGGER = create_logger("bikesantiago.log")
 
 
 def get_model_company(code:str) -> (m_company | None):
+    """
+    Obtiene la instancia del modelo m_company, si no, retorna None.
+    """
     company_instance = m_company.objects.filter(company_code=code).first()
     return company_instance
 
 
 def get_model_payment(code:str) -> (m_payment | None):
+    """
+    Obtiene la instancia del modelo m_payment, si no, retorna None.
+    """
     payment_instance = m_payment.objects.filter(payment_code=code).first()
     return payment_instance
 
 
 def get_model_network(api_id:int) -> (m_network | None):
+    """
+    Obtiene la instancia del modelo m_network, si no, retorna None.
+    """
     network_instance = m_network.objects.filter(api_id=api_id).first()
     return network_instance
 
 
 def get_model_extra(api_uid:str) -> (m_extra | None):
+    """
+    Obtiene la instancia del modelo m_extra, si no, retorna None.
+    """
     extra_instance = m_extra.objects.filter(api_uid=api_uid).first()
     return extra_instance
 
 
 def get_model_station(api_id:str) -> (m_station | None):
+    """
+    Obtiene la instancia del modelo m_station, si no, retorna None.
+    """
     station_instance = m_station.objects.filter(api_id=api_id).first()
     return station_instance
 
 
 @ratelimit(key='ip', rate='10/m')
 def load_data_bikesantiago(request:Request) -> (Response):
+    """
+    Función principal, encargada de recibir la solicitud del cliente y obtener la información 
+    de la API objetivo. Posee tratamiento de varios casos en donde la data presentaba 
+    anormalidades, como, por ejemplo, la desaparición repentina de ciertas keys de 
+    diccionario, entre otros. Construye la data en orden para su coherencia y realiza 
+    comprobación de existencia de datos para realizar actualización o creación según 
+    corresponda. Se puede ejecutar sin perjudicar la data existente.
+    """
     try:
         # Load the data from the API
         request_response = requests.get("http://api.citybik.es/v2/networks/bikesantiago")
