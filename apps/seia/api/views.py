@@ -13,13 +13,13 @@ from ..models import (
     m_project,
 )
 from ..serializers import (
-    s_project,
+    s_project_only_read,
 )
 
 
 class v_seia_data(ListCreateAPIView): # Carga de datos, Listado para busquedas general
     permission_classes = (IsAuthenticated,)
-    serializer_class = s_project
+    serializer_class = s_project_only_read
     queryset = m_project.objects.all()
     pagination_class = LimitOffsetPagination
     limit = 100
