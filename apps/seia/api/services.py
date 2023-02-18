@@ -94,7 +94,7 @@ def load_data_seia(request:Request) -> (Response):
         soup = BeautifulSoup(webpage, "html.parser")
         page_select = soup.find("select", attrs={"name": "pagina_offset"})
         select_options = page_select.find_all("option")
-        n_jobs = 30
+        n_jobs = 15
         with Parallel(n_jobs=n_jobs, prefer="threads", timeout=90000) as parallel:
             parallel(
                 delayed(parallel_data_seia)(page) for page in range(1, len(select_options)+1)
