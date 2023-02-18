@@ -173,7 +173,8 @@ def parallel_data_seia(page: int) -> (None):
                 row_data["status"] = columna.text if columna.text != "" and columna.text != None else None
             if count == 9:
                 if columna != "" and columna != None:
-                    row_data["map"] = "https://seia.sea.gob.cl/" + columna.a.get('onclick').replace("window.open('", "").replace("', 'mapa')", "").replace(" ", "") if columna.a.get('onclick', None) != None else None
+                    if columna.a != None:
+                        row_data["map"] = "https://seia.sea.gob.cl/" + columna.a.get('onclick').replace("window.open('", "").replace("', 'mapa')", "").replace(" ", "") if columna.a.get('onclick', None) != None else None
                 final_array.append(row_data.copy())
             if count >= 10:
                 break
