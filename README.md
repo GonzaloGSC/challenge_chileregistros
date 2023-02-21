@@ -18,7 +18,7 @@ Proyecto django enfocado en el consumo de API y Web Scraping.
   - [bikesantiago](#bikesantiago)
 - [Instalación](#instalación)
   - [Linux](#linux)
-  - [Windows:](#windows)
+  - [Windows](#windows)
 - [¿Como utilizarlo?](#como-utilizarlo)
 
 # Descripción general
@@ -71,7 +71,7 @@ Su función principal posee tratamiento de varios casos en donde la data present
     git clone https://github.com/GonzaloGSC/challenge_chileregistros.git
     cd path/to/challenge_chileregistros
     virtualenv env
-    source env/bin/actívate
+    source env/bin/activate
     pip install -r requirements_prod.txt
     ```
 
@@ -98,7 +98,7 @@ Su función principal posee tratamiento de varios casos en donde la data present
     python manage.py runserver
     ```
 [Volver al Índice 🔝](#índice)
-## Windows:
+## Windows
 
 1. Instalar Python 3.10: https://www.python.org/downloads/release/python-3100/
 
@@ -114,7 +114,7 @@ Su función principal posee tratamiento de varios casos en donde la data present
     git clone https://github.com/GonzaloGSC/challenge_chileregistros.git
     cd path/to/challenge_chileregistros
     virtualenv env
-    source env/scripts/actívate
+    source env/scripts/activate
     pip install -r requirements.txt
     ```
 
